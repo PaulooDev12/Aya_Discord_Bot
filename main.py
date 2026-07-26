@@ -1,5 +1,6 @@
 from os import getenv
 import random
+from time import process_time_ns
 
 import discord
 from discord.ext import commands
@@ -32,19 +33,24 @@ waifus_images = {
 colecoes = {}
 @bot.event
 async def on_ready():
-    print('Logged in as')
-@bot.command()
-async def ping(ctx):
-    await ctx.send('pong')
+    try:
+        synced = await bot.tree.sync()
+        print("Synced")
+    except Exception as e:
+        print(f"Erro ao sincronizar comandos: {e}")
+    print(f'Logged in as {bot.user}')
+@bot.tree.command()
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message('pong')
 
-@bot.command(name="hi")
-async def ola(ctx):
-    name = ctx.message.author.name
-    await ctx.send(f'ola {name} como esta')
+@bot.tree.command(name="hi", description="Te diz oi")
+async def ola(interaction: discord.Interaction):
+    name = interaction.user.display_name
+    await interaction.response.send_message(f'ola {name} como esta')
 
-@bot.command(name="waifu")
-async def jogo(ctx):
-    id = ctx.message.author.id
+@bot.tree.command(name="random_quintuplete", description="Te da uma quintupla aleatoria")
+async def jogo(interaction: discord.Interaction):
+    id = interaction.user.id
 
     key = random.choice(list(waifus_images.keys()))
     if not id in colecoes:
@@ -56,22 +62,23 @@ async def jogo(ctx):
     embed.set_image(url=image)
     colecao.add(key)
     if len(colecao) == 5:
-        name = ctx.message.author.name
+        name = interaction.user.display_name
         embed1 = discord.Embed(title="Parabens!!!", description=f"{name}, Voce Venceu o Gacha das Quintuplas")
         embed1.set_image(url="https://cdn.discordapp.com/attachments/1071496420483399700/1530789131830034572/download_16.jpg?ex=6a66d9f9&is=6a658879&hm=de544b12bc9eaaaa853babeb9b44500734f19921aaae1b57b90b11325b87aea5&")
-        await ctx.send(embed=embed1)
+        await interaction.response.send_message(embed=embed1)
         colecao.clear()
         return
-    await ctx.send(embed=embed)
-@bot.command(name="chamar_user")
-async def chamar_user(ctx, user: discord.Member = None):
-    await ctx.send(f"ola @{user} {user.display_avatar}")
-@bot.command(name="vocaloid")
-async def teto(ctx):
+    await interaction.response.send_message(embed=embed)
+@bot.tree.command(name="chamar_user", description="Chama um usuario e marca no chat com sua foto")
+async def chamar_user(interaction: discord.Interaction, user: discord.Member):
+    avatar_url = user.display_avatar.url
+    await interaction.response.send_message(f"ola {user.mention} {avatar_url}")
+@bot.tree.command(name="vocaloid", description="Vocaloid aleatoria")
+async def teto(interaction: discord.Interaction):
     key = random.choice(list(vocaloids_images.keys()))
     url = vocaloids_images[key]
     embed = discord.Embed(title=key)
     embed.set_image(url=url)
-    await ctx.send(embed=embed)
+    await interaction.response.send_message(embed=embed)
 token = getenv('TOKEN')
 bot.run(token)
