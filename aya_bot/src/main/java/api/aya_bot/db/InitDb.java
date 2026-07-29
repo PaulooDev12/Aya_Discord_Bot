@@ -2,6 +2,7 @@ package api.aya_bot.db;
 
 import api.aya_bot.models.ApiKey;
 import api.aya_bot.repositories.ApiKeyRepository;
+import api.aya_bot.service.HashUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -25,15 +26,13 @@ public class InitDb implements CommandLineRunner {
        if(apiKeyRepository.count()==0){
            String key = "adm_" + UUID.randomUUID().toString().replace("-", "");
            ApiKey apiKey = new ApiKey();
-           apiKey.setApiKeyString(key);
+           String hashedKey = HashUtils.hashSHA256(key);
+           apiKey.setApiKeyString(hashedKey);
            apiKey.setOwner("admin_p");
            apiKey.setActive(true);
            apiKeyRepository.save(apiKey);
            LOGGER.info("API KEY ADDED, ");
-           System.out.println("Key: " + key);
-
-       }else{
-        LOGGER.info("API KEY ALREADY EXISTS");
+           System.out.println("Copy this key: " + key);
 
        }
     }

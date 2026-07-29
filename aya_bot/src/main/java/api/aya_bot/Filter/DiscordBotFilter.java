@@ -1,6 +1,7 @@
 package api.aya_bot.Filter;
 
 import api.aya_bot.repositories.ApiKeyRepository;
+import api.aya_bot.service.HashUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,12 +26,13 @@ public class DiscordBotFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-            String apiKey = request.getHeader("aya-key");
-            if (apiKey == null || apiKey.isBlank()) {
+            String originalApiKey = request.getHeader("aya-key");
+            if (originalApiKey == null || originalApiKey.isBlank()) {
                 throwError(response,"Chave inexistente ou invalida");
                 return;
             }
-            boolean valida = apiKeyRepository.findByApiKeyStringAndActiveTrue(apiKey).isPresent();
+            String hashedKey = HashUtils.hashSHA256(originalApiKey);
+            boolean valida = apiKeyRepository.findByApiKeyStringAndActiveTrue(hashedKey).isPresent();
             if(!valida){
                 throwError(response,"Unexistent key or Invalid key");
                 return;
